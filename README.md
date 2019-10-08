@@ -31,15 +31,23 @@
 
 ## QML如何实现
 和js通信:
+
     接收js发送的消息:
+
         接收webview的receiveMessage信号
+
     调用js代码:
+
         通过webview的evaluateJavaScript方法执行`JSBridge._handleMessageFromNative()`方法
 
 和C++通信:
+
     调用C++代码:
+    
         C++给QML注入`NativeSdkManager`属性，通过`NativeSdkManager.request()`实现
+        
     接收C++发送的信号:
+    
         绑定信号的方式实现， 例如：`NativeSdkManager.success.connect()`
 
 代码示例见Spage.qml页面实现
