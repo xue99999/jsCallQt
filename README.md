@@ -1,8 +1,13 @@
-# js调用c++
+# Syberos 中 JS和C++ 通讯示例
 
-## js如何调用
-通过JSBridge实现和QML通信，以及处理回调函数
+## JavaScript 通知 Native
 
+基于QT WebView 的机制和开放的 API, 实现这个功能方案：
+navigator.qt.postMessage ，通过QT WebView提供的方法发送信息到Native WebView。
+> 具体代码实现见:app/www/lib/jsbridge.js
+
+
+JS端调用示例
 ``` javascript
     function requestOne() {
       var options={
@@ -29,35 +34,79 @@
     }
 ```
 
+
 ## QML如何实现
-和js通信:
 
-    接收js发送的消息:
+1、experimental.onMessageReceived :Native WebView 通过该方法接受JS端的通知。
 
-        接收webview的receiveMessage信号
-
-    调用js代码:
-
-        通过webview的evaluateJavaScript方法执行`JSBridge._handleMessageFromNative()`方法
-
-和C++通信:
-
-    调用C++代码:
-    
+2、发送请求到C++  
+  
         C++给QML注入`NativeSdkManager`属性，通过`NativeSdkManager.request()`实现
-        
-    接收C++发送的信号:
-    
-        绑定信号的方式实现， 例如：`NativeSdkManager.success.connect()`
+3、接受C++成功或者失败信号后，返回给JavaScript端. 
+   
+       通过webview的evaluateJavaScript方法执行`JSBridge._handleMessageFromNative()`方法
 
-代码示例见Spage.qml页面实现
+代码实现参见:app/qml/SPage.qml
+```
+SWebview{
+    id:spage
+    surl:"file://" + helper.getWebRootPath() + "/index.html"
+    Connections {
+        target: spage
+        //接受webView发出信号
+        onReceiveMessage:{
+            var data = message.data ? JSON.parse(message.data) : {}
+            //调用C++
+            NativeSdkManager.request(data.module, data.callbackId, data.handlerName, data.data)
+        }
+    }
 
+    Component.onCompleted: {
+        // 成功回调绑定函数
+        NativeSdkManager.success.connect(function(callbackId, result){
+            var resObj = {
+              responseId: Number(callbackId),
+              responseData: {
+                result: result
+              }
+            }
+            var res = JSON.stringify(resObj)
+
+            //直接执行JS代码，调用JS实现的API。
+            //此方法可以用来实现Native直接调用JS实现的方法。
+            //为了兼容h5模式和实现原生直接调用js方法，采用此模式实现
+            spage.evaluateJavaScript(res)
+
+        })
+        // 错误回调绑定函数
+        NativeSdkManager.failed.connect(function(handlerId, errorCode, errorMsg){
+            var obj = {
+              responseId: Number(handlerId),
+              responseData: {
+                code: Number(errorCode),
+                msg: errorMsg
+              }
+            }
+            var res = JSON.stringify(obj)
+
+            //直接执行JS代码，调用JS实现的API。
+            //此方法可以用来实现Native直接调用JS实现的方法。
+            //为了兼容h5模式和实现原生直接调用js方法，采用此模式实现
+            spage.evaluateJavaScript(res)
+        })
+    }
+}
+```
 
 
 ## C++插件实现机制
-提供`NativeSdkHandlerBase`基础类,该类提供了request、success、failed、subscribe信号的实现。
 
-``` javascript
+
+1、提供`NativeSdkHandlerBase`基础类,该类提供了request、success、failed、subscribe信号的实现。
+2、实现类需继承`NativeSdkHandlerBase` 类
+
+
+``` c++
     void success(long responseID, QVariant result);
     void failed(long responseID,long errorCode,QString errorMsg);
     //订阅机制
@@ -66,7 +115,7 @@
 
 `request`: 消息的统一实现类,拓展组件需要继承基础类该后实现request的处理,如:
 
-``` javascript
+``` c++
 void Demo::request(QString callBackID, QString actionName, QVariantMap params){
     qDebug() << Q_FUNC_INFO << "request" << callBackID << endl;
 
@@ -78,12 +127,13 @@ void Demo::request(QString callBackID, QString actionName, QVariantMap params){
 
 success:成功信号。拓展组件处理完成发送成功信号,处理正确结果。
 
-``` javascript
+``` c++
     emit success(callBackID, QVariant(json));
 ```
 `failed`:失败信号,处理失败后，发送失败信号。
 
 `subscribe`:订阅信号。实现原生直接通知前端的信号槽。如屏幕变动后主动告知前端。
 
-代码示例见demo.cpp
+**代码示例见demo.cpp**
+
 
