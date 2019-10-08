@@ -4,8 +4,8 @@
 
 基于QT WebView 的机制和开放的 API, 实现这个功能方案：
 navigator.qt.postMessage ，通过QT WebView提供的方法发送信息到Native WebView。
-> 具体代码实现见:app/www/lib/jsbridge.js
 
+**代码示例见app/www/lib/jsbridge.js**
 
 JS端调用示例
 ``` javascript
@@ -46,7 +46,8 @@ JS端调用示例
    
        通过webview的evaluateJavaScript方法执行`JSBridge._handleMessageFromNative()`方法
 
-代码实现参见:app/qml/SPage.qml
+**代码示例见app/qml/SPage.qml**
+
 ```
 SWebview{
     id:spage
@@ -106,6 +107,8 @@ SWebview{
 
 2、实现类需继承`NativeSdkHandlerBase` 类
 
+**代码示例见demo.cpp**
+
 
 ``` c++
     void success(long responseID, QVariant result);
@@ -135,6 +138,5 @@ success:成功信号。拓展组件处理完成发送成功信号,处理正确�
 
 `subscribe`:订阅信号。实现原生直接通知前端的信号槽。如屏幕变动后主动告知前端。
 
-**代码示例见demo.cpp**
 
 
