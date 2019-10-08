@@ -11,7 +11,7 @@ SWebview{
         onReceiveMessage:{
             var data = message.data ? JSON.parse(message.data) : {}
             //调用C++
-            NativeSdkManager.request(data.module, data.callbackId, data.handerName, data.params)
+            NativeSdkManager.request(data.module, data.callbackId, data.handlerName, data.data)
         }
     }
 
@@ -19,21 +19,34 @@ SWebview{
         // 成功回调绑定函数
         NativeSdkManager.success.connect(function(callbackId, result){
             var resObj = {
-              callbackId: Number(callbackId),
-              result: result
+              responseId: Number(callbackId),
+              responseData: {
+                result: result
+              }
             }
             var res = JSON.stringify(resObj)
 
-            //示例一：直接执行JS代码，调用JS实现的API。
+            //直接执行JS代码，调用JS实现的API。
             //此方法可以用来实现Native直接调用JS实现的方法。
             //为了兼容h5模式和实现原生直接调用js方法，采用此模式实现
             spage.evaluateJavaScript(res)
-            //示例二：发送一个消息,JS中使用navigator.qt.onmessage接受。为了兼容后续高版本的实现(QtWebEngine)。
-            spage.postMessage(res)
 
         })
         // 错误回调绑定函数
-        NativeSdkManager.failed.connect(function(callbackId , result){
+        NativeSdkManager.failed.connect(function(handlerId, errorCode, errorMsg){
+            var obj = {
+              responseId: Number(handlerId),
+              responseData: {
+                code: Number(errorCode),
+                msg: errorMsg
+              }
+            }
+            var res = JSON.stringify(obj)
+
+            //直接执行JS代码，调用JS实现的API。
+            //此方法可以用来实现Native直接调用JS实现的方法。
+            //为了兼容h5模式和实现原生直接调用js方法，采用此模式实现
+            spage.evaluateJavaScript(res)
         })
     }
 }

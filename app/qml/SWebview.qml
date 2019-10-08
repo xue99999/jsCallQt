@@ -62,7 +62,7 @@ CPage{
     //示例一：执行JavaScript代码
     function evaluateJavaScript(result){
         swebview.experimental.evaluateJavaScript(
-        'JSBridge._handleMessageFromNative('+ result +')'
+          'JSBridge._handleMessageFromNative('+ result +')'
         )
     }
     //示例二：发送一个消息

@@ -9,75 +9,62 @@
   <meta name="viewport"
     content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0" />
   <title>Syberh Hybrid API</title>
+  <script type="text/javascript" src="lib/jsbridge.js"></script>
 </head>
 
 <body>
-  <button onclick="requestOne()">示例一</button>
-  <button onclick="requestTwo()">示例二</button>
+  <button onclick="requestOne()">成功回调</button>
+  <button onclick="requestTwo()">失败回调</button>
 
-  <div id="text"></div><br>
+  <div id="result"></div><br>
 
-示例一：直接执行JS代码，来实现调用JS 实现的API。此方法可以用来实现Native直接调用JS实现的方法。为了兼容h5模式和实现原生直接调用js方法，采用此模式实现。<br>
-示例二：发送一个消息,JS中使用navigator.qt.onmessage接受。为了兼容后续高版本的实现(QtWebEngine)。
+  说明: 根据content参数是否为空，来判断是执行成功回调还是执行失败回调
 
   <script type="text/javascript" src="lib/vconsole.min.js"></script>
   <script>
     var vConsole = new VConsole()
-    var JSBridge = {};
-    var firstCallbackId = getRandomNum();//请求标识
-    var secondCallbackId = getRandomNum();//请求标识
 
-    // min:随机数的最小值，max:随机数的最大值
-    function getRandomNum(){
-        var Min = 10000000;
-        var Max = 99999999;
-        var Range = Max - Min;
-        var Rand = Math.random();
-        return(Min + Math.round(Rand * Range));
-    }
-
-    // 接收webview信息
-    JSBridge._handleMessageFromNative = function (data) {
-      if (data.callbackId == firstCallbackId) {
-        document.getElementById('text').innerText = data.result.content;
-      }
-    }
-    // 接收webview信息
-    navigator.qt.onmessage = function (data) {
-      var obj = data.data ? JSON.parse(data.data) : {}
-      if (obj.callbackId == secondCallbackId) {
-        document.getElementById('text').innerText = obj.result.content;
-      }
-    }
-
+    // 有参数走成功回调
     function requestOne() {
-      var message = {
-        module: 'Demo*',
-        callbackId: firstCallbackId,
-        handerName: 'test',
-        params: {
+      var options={
+        proto: 'Demo*',
+        handlerName: 'test',
+        data: {
           content: 'syberos first request'
+        },
+        success:function(res){
+          // 返回结果 {content: 'syberos first request'}
+          document.getElementById('result').innerText = res.content
+        },
+        fail:function(error){
+          console.log('request fail')
+          document.getElementById('result').innerText = JSON.stringify(error)
         }
-      };
-      //最终发送给webview内容
-      var str = JSON.stringify(message);
-      navigator.qt.postMessage(str);
+      }
+
+      JSBridge.callJsBridge(options);
     }
 
+    // 参数为空走fail回调
     function requestTwo() {
-      var message = {
-        module: 'Demo*',
-        callbackId: secondCallbackId,
-        handerName: 'test',
-        params: {
-          content: 'syberos second request'
+      var options={
+        proto: 'Demo*',
+        handlerName: 'test',
+        data: {
+          content: ''
+        },
+        success:function(res){
+          // 返回结果 {content: 'syberos first request'}
+          document.getElementById('result').innerText = res.content
+        },
+        fail:function(error){
+          console.log('request fail')
+          document.getElementById('result').innerText = JSON.stringify(error)
         }
-      };
-      //最终发送给webview内容
-      var str = JSON.stringify(message);
-      navigator.qt.postMessage(str);
-    }
+      }
 
+      JSBridge.callJsBridge(options);
+    }
   </script>
 </body>
 

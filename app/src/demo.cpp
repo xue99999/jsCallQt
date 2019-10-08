@@ -37,11 +37,15 @@ void Demo::submit(QString typeID, QString callBackID, QString actionName, QVaria
 void Demo::test(long callBackID,QVariantMap params){
     qDebug() << Q_FUNC_INFO << "test" << params << endl;
 
+    // 取页面传过来的参数
     QString name = params.value("content").toString();
 
-    QJsonObject jsonObject;
-    jsonObject.insert("content", name);
-    QJsonValue::fromVariant(jsonObject);
-    emit success(callBackID, QVariant(jsonObject));
-
+    if (name.isEmpty()) {
+        emit failed(callBackID, 1001, "content参数不能为空");
+    } else {
+        QJsonObject jsonObject;
+        jsonObject.insert("content", name);
+        QJsonValue::fromVariant(jsonObject);
+        emit success(callBackID, QVariant(jsonObject));
+    }
 }
