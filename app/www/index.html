@@ -20,14 +20,29 @@
 
   说明: 根据content参数是否为空，来判断是执行成功回调还是执行失败回调
 
+<script type="text/javascript" src="lib/qwebchannel.js"></script>
   <script type="text/javascript" src="lib/vconsole.min.js"></script>
   <script>
     var vConsole = new VConsole()
 
+    var JSBridge = { trans: undefined, channel: undefined };
+
+    new QWebChannel(qt.webChannelTransport, (function(channel) {
+        JSBridge.trans = channel.objects.trans;
+        JSBridge.channel = channel;
+    }));
+
+    function success(msg){
+        console.log(msg)
+        document.getElementById('result').innerText = JSON.stringify(msg)
+    }
+
+
+
     // 有参数走成功回调
     function requestOne() {
       var options={
-        proto: 'Demo*',
+        module: 'Demo*',
         handlerName: 'test',
         data: {
           content: 'syberos first request'
@@ -42,13 +57,13 @@
         }
       }
 
-      JSBridge.callJsBridge(options);
+      JSBridge.trans.postMessage(options)
     }
 
     // 参数为空走fail回调
     function requestTwo() {
       var options={
-        proto: 'Demo*',
+        module: 'Demo*',
         handlerName: 'test',
         data: {
           content: ''
@@ -63,7 +78,7 @@
         }
       }
 
-      JSBridge.callJsBridge(options);
+      JSBridge.trans.postMessage(options)
     }
   </script>
 </body>

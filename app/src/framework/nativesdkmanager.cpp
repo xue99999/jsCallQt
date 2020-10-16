@@ -57,6 +57,10 @@ void NativeSdkManager::openByDocument(const QString& action, const QString& mime
 }
 
 void NativeSdkManager::request(QString className,QString callBackID,QString actionName,QVariantMap params){
+   qDebug() <<Q_FUNC_INFO<< "$$$ className:" << className << endl;
+   qDebug() <<Q_FUNC_INFO<< "$$$ callBackID:" << callBackID << endl;
+   qDebug() <<Q_FUNC_INFO<< "$$$ actionName:" << actionName << endl;
+   qDebug() <<Q_FUNC_INFO<< "$$$ params:" << params << endl;
     NativeSdkHandlerBase * handler = m_NativeSdkFactory.getHandler(className);
     if(handler){
         if(!m_NativeSdkFactory.IsInitConnect(className))

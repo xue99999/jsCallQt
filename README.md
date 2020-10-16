@@ -2,17 +2,28 @@
 
 ## JavaScript 通知 Native
 
-基于QT WebView 的机制和开放的 API, 实现这个功能方案：
-navigator.qt.postMessage ，通过QT WebView提供的方法发送信息到Native WebView。
+基于QT WebEngine  的机制和开放的 API, 实现这个功能方案：
+WebEngineView 通过 WebChannel 管道来通信, 用ObjectModel来接受html页面的消息, 接受到消息后用来访问`C++`源码
 
 **代码示例见app/www/lib/jsbridge.js**
 
 JS端调用示例
-``` javascript
+引入 qwebchannel.js, 用来和QML WebChannel通信
+```javascript
+    <script type="text/javascript" src="lib/qwebchannel.js"></script>
+
+    var JSBridge = { trans: undefined, channel: undefined };
+
+    new QWebChannel(qt.webChannelTransport, (function(channel) {
+        JSBridge.trans = channel.objects.trans;
+        JSBridge.channel = channel;
+    }));
+
+
     function requestOne() {
       var options={
         // 模块名
-        proto: 'Demo*',
+        module: 'Demo*',
         // 方法名
         handlerName: 'test',
         // 参数
@@ -30,21 +41,46 @@ JS端调用示例
       }
     
       // 给QML发送消息
-      JSBridge.callJsBridge(options);
+      JSBridge.trans.postMessage(options)
     }
 ```
 
 
 ## QML如何实现
 
-1、experimental.onMessageReceived :Native WebView 通过该方法接受JS端的通知。
+1、
+```javascript
+    import QtQml.Models 2.2
+    import QtWebEngine 1.5
+    import QtWebChannel 1.0
+    
+    ObjectModel {
+        id: trans
+        WebChannel.id: "trans"
+
+        function postMessage(msg){
+            console.log('trans postMessage ', msg)
+        }
+    }
+
+    WebChannel {
+        id: channel
+        registeredObjects: [trans]
+    }
+
+    WebEngineView {
+        id: swebview
+    }
+```
+
+  通过postMessage该方法接受JS端的通知。
 
 2、发送请求到C++  
   
         C++给QML注入`NativeSdkManager`属性，通过`NativeSdkManager.request()`实现
 3、接受C++成功或者失败信号后，返回给JavaScript端. 
    
-       通过webview的evaluateJavaScript方法执行`JSBridge._handleMessageFromNative()`方法
+       通过webview的evaluateJavaScript方法执行`success()`方法(success是html页面自定义的方法)
 
 **代码示例见app/qml/SPage.qml**
 

@@ -10,5 +10,6 @@
         <file>app.pro</file>
         <file>qmldir</file>
         <file>res.qrc</file>
+        <file>www/lib/qwebchannel.js</file>
     </qresource>
 </RCC>
